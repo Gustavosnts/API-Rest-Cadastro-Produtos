@@ -36,8 +36,6 @@ A API utiliza códigos de status HTTP para indicar o resultado de cada requisiç
 
 ## 4. Como Executar a API
 
-Acesse o link `` para ter acesso ao projeto em web sem a necessidade de download dos projetos
-
 1.  Certifique-se de ter Python e a biblioteca Flask instalada (`pip install Flask Flask-CORS`).
 2.  Salve o código da API em um arquivo Python (por exemplo, `app.py`).
 3.  Crie um arquivo de banco de dados SQLite chamado `db-produtos.db` no mesmo diretório do `app.py` (ou ajuste o caminho na variável `DATABASE` do `app.py` conforme a sua estrutura de arquivos).
