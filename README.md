@@ -4,7 +4,7 @@ API Rest de cadastro de produtos, utilizando SLQlite, implementando CRUD, com fr
 
 ## 1. Configuração da API
 
-* **Tecnologias:** Python, JavaScript, HTML, CSS e bibliotecas Flask
+* **Tecnologias:** Python, HTML, CSS e bibliotecas Flask
 * **Banco de Dados:** SQLite (`db-produtos.db`)
 * **CORS:** Habilitado para permitir requisições (front-end).
 * **URL Base:** `http://127.0.0.1:5000`
