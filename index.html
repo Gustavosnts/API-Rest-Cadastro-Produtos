@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        #cadastro-form, #alteracao-form {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="number"] {
+            width: calc(100% - 12px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button.excluir {
+            background-color: #dc3545;
+        }
+        #lista-produtos {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        #lista-produtos th, #lista-produtos td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        #lista-produtos th {
+            background-color: #f2f2f2;
+        }
+        .acoes {
+            white-space: nowrap;
+        }
+        .mensagem {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .sucesso {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .erro {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Produtos</h1>
+
+    <div id="cadastro-form">
+        <h2>Cadastrar Novo Produto</h2>
+        <label for="descricao">Descrição:</label>
+        <input type="text" id="descricao" name="descricao" required><br>
+
+        <label for="precocompra">Valor do Produto:</label>
+        <input type="number" id="precocompra" name="precocompra" step="0.01" required><br>
+
+        <button onclick="cadastrarProduto()">Cadastrar</button>
+        <div id="mensagem-cadastro" class="mensagem hidden"></div>
+    </div>
+
+    <div id="alteracao-form" class="hidden">
+        <h2>Alterar Produto</h2>
+        <label for="idproduto-alterar">ID:</label>
+        <input type="number" id="idproduto-alterar" name="idproduto-alterar" readonly><br>
+
+        <label for="descricao-alterar">Descrição:</label>
+        <input type="text" id="descricao-alterar" name="descricao-alterar" required><br>
+
+        <label for="precocompra-alterar">Valor do Produto:</label>
+        <input type="number" id="precocompra-alterar" name="precocompra-alterar" step="0.01" required><br>
+
+        <button onclick="salvarAlteracao()">Salvar</button>
+        <button onclick="alternarFormularioAlteracao()">Cancelar</button>
+        <div id="mensagem-alteracao" class="mensagem hidden"></div>
+    </div>
+
+    <h2>Lista de Produtos</h2>
+    <table id="lista-produtos">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+    <div id="mensagem-listagem" class="mensagem hidden"></div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:5000/produtos';
+
+        async function cadastrarProduto() {
+            const descricao = document.getElementById('descricao').value;
+            const precocompra = parseFloat(document.getElementById('precocompra').value);
+            const mensagemCadastro = document.getElementById('mensagem-cadastro');
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ descricao, precocompra }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensagemCadastro.textContent = data.mensagem;
+                    mensagemCadastro.className = 'mensagem sucesso';
+                    document.getElementById('descricao').value = '';
+                    document.getElementById('precocompra').value = '';
+                    listarProdutos();
+                } else {
+                    mensagemCadastro.textContent = data.erro;
+                    mensagemCadastro.className = 'mensagem erro';
+                }
+                mensagemCadastro.classList.remove('hidden');
+                setTimeout(() => mensagemCadastro.classList.add('hidden'), 3000);
+
+            } catch (error) {
+                mensagemCadastro.textContent = `Erro ao cadastrar produto: ${error}`;
+                mensagemCadastro.className = 'mensagem erro';
+                mensagemCadastro.classList.remove('hidden');
+                setTimeout(() => mensagemCadastro.classList.add('hidden'), 3000);
+            }
+        }
+
+        async function listarProdutos() {
+            const tabelaProdutos = document.getElementById('lista-produtos').getElementsByTagName('tbody')[0];
+            const mensagemListagem = document.getElementById('mensagem-listagem');
+            tabelaProdutos.innerHTML = ''; 
+
+            try {
+                const response = await fetch(apiUrl);
+                const produtos = await response.json();
+
+                if (response.ok) {
+                    if (produtos.length > 0) {
+                        produtos.forEach(produto => {
+                            const row = tabelaProdutos.insertRow();
+                            row.insertCell().textContent = produto.idproduto;
+                            row.insertCell().textContent = produto.descricao;
+                            row.insertCell().textContent = produto.precocompra;
+                            const acoesCell = row.insertCell();
+                            const alterarButton = document.createElement('button');
+                            alterarButton.textContent = 'Alterar';
+                            alterarButton.onclick = () => exibirParaAlterar(produto.idproduto);
+                            const excluirButton = document.createElement('button');
+                            excluirButton.textContent = 'Excluir';
+                            excluirButton.className = 'excluir';
+                            excluirButton.onclick = () => excluirProduto(produto.idproduto);
+                            acoesCell.appendChild(alterarButton);
+                            acoesCell.appendChild(excluirButton);
+                        });
+                        mensagemListagem.classList.add('hidden');
+                    } else {
+                        mensagemListagem.textContent = 'Nenhum produto cadastrado.';
+                        mensagemListagem.className = 'mensagem';
+                        mensagemListagem.classList.remove('hidden');
+                    }
+                } else {
+                    mensagemListagem.textContent = `Erro ao listar produtos: ${produtos.erro}`;
+                    mensagemListagem.className = 'mensagem erro';
+                    mensagemListagem.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                mensagemListagem.textContent = `Erro ao listar produtos: ${error}`;
+                mensagemListagem.className = 'mensagem erro';
+                mensagemListagem.classList.remove('hidden');
+            }
+        }
+
+        async function excluirProduto(id) {
+            if (confirm(`Tem certeza que deseja excluir o produto com ID ${id}?`)) {
+                const mensagemListagem = document.getElementById('mensagem-listagem');
+                try {
+                    const response = await fetch(`${apiUrl}/${id}`, {
+                        method: 'DELETE',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        mensagemListagem.textContent = data.mensagem;
+                        mensagemListagem.className = 'mensagem sucesso';
+                        listarProdutos();
+                    } else {
+                        mensagemListagem.textContent = data.erro;
+                        mensagemListagem.className = 'mensagem erro';
+                    }
+                    mensagemListagem.classList.remove('hidden');
+                    setTimeout(() => mensagemListagem.classList.add('hidden'), 3000);
+
+                } catch (error) {
+                    mensagemListagem.textContent = `Erro ao excluir produto: ${error}`;
+                    mensagemListagem.className = 'mensagem erro';
+                    mensagemListagem.classList.remove('hidden');
+                    setTimeout(() => mensagemListagem.classList.add('hidden'), 3000);
+                }
+            }
+        }
+
+        function exibirParaAlterar(id) {
+            const formularioAlteracao = document.getElementById('alteracao-form');
+            formularioAlteracao.classList.remove('hidden');
+
+            fetch(`${apiUrl}/${id}`)
+                .then(response => response.json())
+                .then(produto => {
+                    if (produto && !produto.erro) {
+                        document.getElementById('idproduto-alterar').value = produto.idproduto;
+                        document.getElementById('descricao-alterar').value = produto.descricao;
+                        document.getElementById('precocompra-alterar').value = produto.precocompra;
+                    } else {
+                        const mensagemListagem = document.getElementById('mensagem-listagem');
+                        mensagemListagem.textContent = produto.erro || `Erro ao buscar produto com ID ${id}`;
+                        mensagemListagem.className = 'mensagem erro';
+                        mensagemListagem.classList.remove('hidden');
+                        setTimeout(() => mensagemListagem.classList.add('hidden'), 3000);
+                        formularioAlteracao.classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    const mensagemListagem = document.getElementById('mensagem-listagem');
+                    mensagemListagem.textContent = `Erro ao buscar produto: ${error}`;
+                    mensagemListagem.className = 'mensagem erro';
+                    mensagemListagem.classList.remove('hidden');
+                    setTimeout(() => mensagemListagem.classList.add('hidden'), 3000);
+                    formularioAlteracao.classList.add('hidden');
+                });
+        }
+
+        async function salvarAlteracao() {
+            const idproduto = parseInt(document.getElementById('idproduto-alterar').value);
+            const descricao = document.getElementById('descricao-alterar').value;
+            const precocompra = parseFloat(document.getElementById('precocompra-alterar').value);
+            const mensagemAlteracao = document.getElementById('mensagem-alteracao');
+
+            try {
+                const response = await fetch(`${apiUrl}/${idproduto}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ descricao, precocompra }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensagemAlteracao.textContent = data.mensagem;
+                    mensagemAlteracao.className = 'mensagem sucesso';
+                    listarProdutos(); 
+                    alternarFormularioAlteracao(); 
+                } else {
+                    mensagemAlteracao.textContent = data.erro;
+                    mensagemAlteracao.className = 'mensagem erro';
+                }
+                mensagemAlteracao.classList.remove('hidden');
+                setTimeout(() => mensagemAlteracao.classList.add('hidden'), 3000);
+
+            } catch (error) {
+                mensagemAlteracao.textContent = `Erro ao salvar alterações: ${error}`;
+                mensagemAlteracao.className = 'mensagem erro';
+                mensagemAlteracao.classList.remove('hidden');
+                setTimeout(() => mensagemAlteracao.classList.add('hidden'), 3000);
+            }
+        }
+
+        function alternarFormularioAlteracao() {
+            const formularioAlteracao = document.getElementById('alteracao-form');
+            formularioAlteracao.classList.toggle('hidden');
+        }
+
+        window.onload = listarProdutos;
+    </script>
+</body>
+</html>
